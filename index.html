@@ -24,15 +24,23 @@
   <button class="role-btn" onclick="setRole('maestro', this)">Maestro</button>
 </div>
 
+<div class="nav-tabs">
+  <button class="tab-btn active" onclick="showScreen('home', this)">Home</button>
+  <button class="tab-btn" onclick="showScreen('students', this)">Allievi</button>
+  <button class="tab-btn" onclick="showScreen('sessions', this)">Sessioni</button>
+  <button class="tab-btn" onclick="showScreen('leaderboard', this)">Classifica</button>
+  <button class="tab-btn" onclick="showScreen('dashboard', this)">Dashboard</button>
+</div>
+
 <div class="phone">
 
   <div class="app-header">
     <div class="name" id="user-name">Guest</div>
   </div>
 
+  <!-- ================= HOME ================= -->
   <div class="screen active" id="screen-home">
 
-    <!-- LOGIN -->
     <div class="card">
       <button class="checkin-btn" onclick="loginWithGoogle()">
         <i class="fa-brands fa-google"></i>
@@ -40,18 +48,87 @@
       </button>
     </div>
 
-    <!-- CHECKIN -->
     <div class="card">
       <button class="checkin-btn" id="checkin-btn" onclick="doCheckin()">
         Check-in ora
       </button>
     </div>
 
-    <!-- STATS -->
     <div class="card">
       <div>Presenze: <span id="att-count">0</span></div>
     </div>
 
+    <!-- MAESTRO: manual attendance add -->
+    <div class="card maestro-only">
+      <h3>Aggiungi presenza (Maestro)</h3>
+      <select id="manual-student-select"></select>
+      <select id="manual-session-select"></select>
+      <button class="checkin-btn" onclick="maestroAddAttendance()">Aggiungi presenza</button>
+    </div>
+
+    <!-- Editable history -->
+    <div class="card">
+      <h3>Storico presenze</h3>
+      <div id="attendance-history"></div>
+    </div>
+
+  </div>
+
+  <!-- ================= STUDENTS ================= -->
+  <div class="screen" id="screen-students">
+
+    <div class="card maestro-only">
+      <h3>Aggiungi allievo</h3>
+      <input type="text" id="new-student-name" placeholder="Nome">
+      <input type="url" id="new-student-photo" placeholder="URL foto (opzionale)">
+      <input type="text" id="new-student-belt" placeholder="Cintura (es. Bianca, Blu...)">
+      <input type="date" id="new-student-dob" placeholder="Data di nascita">
+      <button class="checkin-btn" onclick="addStudent()">Aggiungi</button>
+    </div>
+
+    <div class="card">
+      <h3>Elenco allievi</h3>
+      <div id="students-list"></div>
+    </div>
+
+  </div>
+
+  <!-- ================= SESSIONS ================= -->
+  <div class="screen" id="screen-sessions">
+
+    <div class="card maestro-only">
+      <h3>Nuova sessione</h3>
+      <input type="text" id="new-session-name" placeholder="Nome sessione (es. Gi Class)">
+      <input type="date" id="new-session-date">
+      <input type="time" id="new-session-time">
+      <button class="checkin-btn" onclick="addSession()">Crea sessione</button>
+    </div>
+
+    <div class="card">
+      <h3>Calendario sessioni</h3>
+      <div id="sessions-list"></div>
+    </div>
+
+  </div>
+
+  <!-- ================= LEADERBOARD ================= -->
+  <div class="screen" id="screen-leaderboard">
+    <div class="card">
+      <h3>Classifica presenze</h3>
+      <div id="leaderboard-list"></div>
+    </div>
+  </div>
+
+  <!-- ================= DASHBOARD ================= -->
+  <div class="screen" id="screen-dashboard">
+    <div class="card">
+      <h3>Panoramica</h3>
+      <div id="dashboard-summary"></div>
+    </div>
+    <div class="card">
+      <h3>Compleanni allievi</h3>
+      <div id="dashboard-dob"></div>
+    </div>
   </div>
 
 </div>
