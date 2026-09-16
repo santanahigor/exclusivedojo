@@ -17,118 +17,136 @@
 </head>
 <body>
 
-<h1 class="page-title">ExclusiveDojo</h1>
-
-<div class="role-switcher">
-  <button class="role-btn active" onclick="setRole('allievo', this)">Allievo</button>
-  <button class="role-btn" onclick="setRole('maestro', this)">Maestro</button>
-</div>
-
-<div class="nav-tabs">
-  <button class="tab-btn active" onclick="showScreen('home', this)">Home</button>
-  <button class="tab-btn" onclick="showScreen('students', this)">Allievi</button>
-  <button class="tab-btn" onclick="showScreen('sessions', this)">Sessioni</button>
-  <button class="tab-btn" onclick="showScreen('leaderboard', this)">Classifica</button>
-  <button class="tab-btn" onclick="showScreen('dashboard', this)">Dashboard</button>
-</div>
-
 <div class="phone">
 
+  <!-- ============ HEADER ============ -->
   <div class="app-header">
+    <img src="assets/logo.jpeg" alt="Exclusive BJJ Academy" class="dojo-logo">
+
+    <div class="header-top">
+      <span class="clock">DojoLog</span>
+      <span class="role-toggle" onclick="toggleRole()" id="role-toggle-btn">Allievo</span>
+    </div>
+    <div class="greeting">Bentornato,</div>
     <div class="name" id="user-name">Guest</div>
-  </div>
-
-  <!-- ================= HOME ================= -->
-  <div class="screen active" id="screen-home">
-
-    <div class="card">
-      <button class="checkin-btn" onclick="loginWithGoogle()">
-        <i class="fa-brands fa-google"></i>
-        Accedi con Google
-      </button>
-    </div>
-
-    <div class="card">
-      <button class="checkin-btn" id="checkin-btn" onclick="doCheckin()">
-        Check-in ora
-      </button>
-    </div>
-
-    <div class="card">
-      <div>Presenze: <span id="att-count">0</span></div>
-    </div>
-
-    <!-- MAESTRO: manual attendance add -->
-    <div class="card maestro-only">
-      <h3>Aggiungi presenza (Maestro)</h3>
-      <select id="manual-student-select"></select>
-      <select id="manual-session-select"></select>
-      <button class="checkin-btn" onclick="maestroAddAttendance()">Aggiungi presenza</button>
-    </div>
-
-    <!-- Editable history -->
-    <div class="card">
-      <h3>Storico presenze</h3>
-      <div id="attendance-history"></div>
-    </div>
-
-  </div>
-
-  <!-- ================= STUDENTS ================= -->
-  <div class="screen" id="screen-students">
-
-    <div class="card maestro-only">
-      <h3>Aggiungi allievo</h3>
-      <input type="text" id="new-student-name" placeholder="Nome">
-      <input type="url" id="new-student-photo" placeholder="URL foto (opzionale)">
-      <input type="text" id="new-student-belt" placeholder="Cintura (es. Bianca, Blu...)">
-      <input type="date" id="new-student-dob" placeholder="Data di nascita">
-      <button class="checkin-btn" onclick="addStudent()">Aggiungi</button>
-    </div>
-
-    <div class="card">
-      <h3>Elenco allievi</h3>
-      <div id="students-list"></div>
-    </div>
-
-  </div>
-
-  <!-- ================= SESSIONS ================= -->
-  <div class="screen" id="screen-sessions">
-
-    <div class="card maestro-only">
-      <h3>Nuova sessione</h3>
-      <input type="text" id="new-session-name" placeholder="Nome sessione (es. Gi Class)">
-      <input type="date" id="new-session-date">
-      <input type="time" id="new-session-time">
-      <button class="checkin-btn" onclick="addSession()">Crea sessione</button>
-    </div>
-
-    <div class="card">
-      <h3>Calendario sessioni</h3>
-      <div id="sessions-list"></div>
-    </div>
-
-  </div>
-
-  <!-- ================= LEADERBOARD ================= -->
-  <div class="screen" id="screen-leaderboard">
-    <div class="card">
-      <h3>Classifica presenze</h3>
-      <div id="leaderboard-list"></div>
+    <div class="belt-badge" id="belt-badge">
+      <i class="fa-solid fa-circle"></i> <span id="belt-text">Nessuna cintura</span>
     </div>
   </div>
 
-  <!-- ================= DASHBOARD ================= -->
-  <div class="screen" id="screen-dashboard">
-    <div class="card">
-      <h3>Panoramica</h3>
-      <div id="dashboard-summary"></div>
+  <!-- ============ SCREENS ============ -->
+  <div class="content">
+
+    <!-- ================= HOME ================= -->
+    <div class="screen active" id="screen-home">
+
+      <div class="card login-card">
+        <button class="checkin-btn secondary" onclick="loginWithGoogle()">
+          <i class="fa-brands fa-google"></i> Accedi con Google
+        </button>
+      </div>
+
+      <div class="session-card">
+        <div class="session-label">SESSIONE DI OGGI</div>
+        <div class="session-name" id="today-session-name">Nessuna sessione oggi</div>
+        <div class="session-time" id="today-session-time"></div>
+        <button class="checkin-btn" id="checkin-btn" onclick="doCheckin()">
+          <i class="fa-solid fa-hand-point-up"></i> Check-in ora
+        </button>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat-tile">
+          <div class="stat-label">Presenze totali</div>
+          <div class="stat-value" id="att-count">0</div>
+          <div class="stat-sub" id="att-since">—</div>
+        </div>
+        <div class="stat-tile">
+          <div class="stat-label">Questo mese</div>
+          <div class="stat-value" id="month-count">0</div>
+          <div class="stat-sub" id="month-sub">di 0 sessioni</div>
+        </div>
+      </div>
+
+      <div class="section-title">ULTIME SESSIONI</div>
+      <div class="list-card" id="attendance-history"></div>
+
+      <!-- MAESTRO: manual attendance add -->
+      <div class="card maestro-only">
+        <h3>Aggiungi presenza (Maestro)</h3>
+        <select id="manual-student-select"></select>
+        <select id="manual-session-select"></select>
+        <button class="checkin-btn" onclick="maestroAddAttendance()">Aggiungi presenza</button>
+      </div>
+
     </div>
-    <div class="card">
-      <h3>Compleanni allievi</h3>
-      <div id="dashboard-dob"></div>
+
+    <!-- ================= LEADERBOARD ================= -->
+    <div class="screen" id="screen-leaderboard">
+      <div class="section-title">CLASSIFICA PRESENZE</div>
+      <div class="list-card" id="leaderboard-list"></div>
     </div>
+
+    <!-- ================= PROFILE ================= -->
+    <div class="screen" id="screen-profilo">
+      <div class="section-title">IL MIO PROFILO</div>
+      <div class="card">
+        <div id="profile-details"></div>
+      </div>
+
+      <div class="section-title">COMPLEANNI ALLIEVI</div>
+      <div class="list-card" id="dashboard-dob"></div>
+
+      <div class="section-title">PANORAMICA DOJO</div>
+      <div class="list-card" id="dashboard-summary"></div>
+    </div>
+
+    <!-- ================= STUDENTS (maestro) ================= -->
+    <div class="screen" id="screen-students">
+      <div class="card maestro-only">
+        <h3>Aggiungi allievo</h3>
+        <input type="text" id="new-student-name" placeholder="Nome">
+        <input type="url" id="new-student-photo" placeholder="URL foto (opzionale)">
+        <input type="text" id="new-student-belt" placeholder="Cintura (es. Bianca, Blu...)">
+        <input type="date" id="new-student-dob">
+        <button class="checkin-btn" onclick="addStudent()">Aggiungi</button>
+      </div>
+      <div class="section-title">ELENCO ALLIEVI</div>
+      <div class="list-card" id="students-list"></div>
+    </div>
+
+    <!-- ================= SESSIONS (maestro) ================= -->
+    <div class="screen" id="screen-sessions">
+      <div class="card maestro-only">
+        <h3>Nuova sessione</h3>
+        <input type="text" id="new-session-name" placeholder="Nome sessione (es. Gi Class)">
+        <input type="date" id="new-session-date">
+        <input type="time" id="new-session-time">
+        <button class="checkin-btn" onclick="addSession()">Crea sessione</button>
+      </div>
+      <div class="section-title">CALENDARIO SESSIONI</div>
+      <div class="list-card" id="sessions-list"></div>
+    </div>
+
+  </div>
+
+  <!-- ============ BOTTOM NAV ============ -->
+  <div class="bottom-nav">
+    <button class="nav-btn active" data-screen="home" onclick="showScreen('home', this)">
+      <i class="fa-solid fa-house"></i><span>Home</span>
+    </button>
+    <button class="nav-btn" data-screen="leaderboard" onclick="showScreen('leaderboard', this)">
+      <i class="fa-solid fa-trophy"></i><span>Classifica</span>
+    </button>
+    <button class="nav-btn maestro-only" data-screen="students" onclick="showScreen('students', this)">
+      <i class="fa-solid fa-users"></i><span>Allievi</span>
+    </button>
+    <button class="nav-btn maestro-only" data-screen="sessions" onclick="showScreen('sessions', this)">
+      <i class="fa-solid fa-calendar"></i><span>Sessioni</span>
+    </button>
+    <button class="nav-btn" data-screen="profilo" onclick="showScreen('profilo', this)">
+      <i class="fa-solid fa-user"></i><span>Profilo</span>
+    </button>
   </div>
 
 </div>

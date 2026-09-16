@@ -1,54 +1,269 @@
 :root {
-  --bg: #0f0f10;
-  --surface: #18181b;
-  --surface2: #111113;
+  --bg: #000000;
+  --header: #0a0a0a;
+  --header2: #000000;
+  --surface: #141414;
+  --surface2: #1c1c1e;
 
-  --border: rgba(255,255,255,0.08);
-  --border-strong: rgba(255,255,255,0.18);
+  --border: rgba(212,175,55,0.15);
+  --border-strong: rgba(212,175,55,0.3);
 
   --text: #f4f4f5;
-  --text2: #a1a1aa;
+  --text2: #9a9a9d;
 
-  --accent: #d4af37;
-  --accent-strong: #f5d76e;
-  --accent-glow: rgba(212,175,55,0.25);
+  --gold: #d4af37;
+  --gold-light: #f5d76e;
+  --gold-glow: rgba(212,175,55,0.25);
+
+  --green: #34c759;
+  --green-bg: rgba(52,199,89,0.12);
+  --gray-bg: rgba(255,255,255,0.06);
 }
 
+* { box-sizing: border-box; }
+
 body {
-  font-family: sans-serif;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background: var(--bg);
   color: var(--text);
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  justify-content: center;
+  padding: 20px 0;
 }
 
 .phone {
-  width: 360px;
+  width: 375px;
+  min-height: 720px;
   background: var(--surface);
-  border-radius: 20px;
-  padding: 20px;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 10px 50px rgba(212,175,55,0.08), 0 0 0 1px var(--border);
+  display: flex;
+  flex-direction: column;
+  position: relative;
 }
 
-.card {
+/* ---------- HEADER ---------- */
+.app-header {
+  background: linear-gradient(160deg, var(--header), var(--header2));
+  border-bottom: 1px solid var(--border-strong);
+  padding: 16px 20px 20px;
+  text-align: center;
+}
+.dojo-logo {
+  width: 90px;
+  margin: 0 auto 10px;
+  display: block;
+  filter: drop-shadow(0 0 6px rgba(212,175,55,0.35));
+}
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: var(--gold-light);
+  opacity: 0.85;
+  margin-bottom: 14px;
+  text-align: left;
+}
+.role-toggle {
+  background: rgba(212,175,55,0.12);
+  border: 1px solid var(--border-strong);
+  padding: 4px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--gold-light);
+}
+.greeting {
+  font-size: 13px;
+  color: var(--text2);
+  text-align: left;
+}
+.name {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  text-align: left;
+  color: var(--text);
+}
+.belt-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(212,175,55,0.1);
+  border: 1px solid var(--border-strong);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  color: var(--gold-light);
+}
+.belt-badge i { color: var(--gold); font-size: 8px; }
+
+/* ---------- CONTENT ---------- */
+.content {
+  flex: 1;
+  padding: 16px 16px 90px;
+  overflow-y: auto;
+}
+.screen { display: none; }
+.screen.active { display: block; }
+
+.section-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gold-light);
+  letter-spacing: 0.5px;
+  margin: 18px 4px 8px;
+  text-transform: uppercase;
+}
+
+.card, .session-card, .list-card {
   background: var(--surface2);
   border: 1px solid var(--border);
+  border-radius: 16px;
   padding: 16px;
   margin-bottom: 12px;
-  border-radius: 12px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.4);
+}
+
+.session-card {
+  text-align: center;
+  border: 1px solid var(--border-strong);
+}
+.session-label {
+  font-size: 11px;
+  color: var(--gold-light);
+  font-weight: 700;
+  margin-bottom: 6px;
+  letter-spacing: 0.5px;
+}
+.session-name {
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 2px;
+  color: var(--text);
+}
+.session-time {
+  font-size: 13px;
+  color: var(--text2);
+  margin-bottom: 14px;
 }
 
 .checkin-btn {
   width: 100%;
   padding: 14px;
   border: none;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #d4af37, #f5d76e);
-  color: black;
-  font-weight: bold;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  color: #111;
+  font-weight: 700;
+  font-size: 15px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.checkin-btn.secondary {
+  background: transparent;
+  color: var(--gold-light);
+  border: 1px solid var(--border-strong);
+}
+.checkin-btn:hover {
+  box-shadow: 0 0 0 2px var(--gold-glow);
+}
+.checkin-btn:active { opacity: 0.85; }
+
+.stat-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+.stat-tile {
+  flex: 1;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  text-align: left;
+}
+.stat-label { font-size: 12px; color: var(--text2); }
+.stat-value { font-size: 26px; font-weight: 700; margin: 4px 0; color: var(--gold-light); }
+.stat-sub { font-size: 11px; color: var(--text2); }
+
+/* ---------- LIST ITEMS ---------- */
+.list-card { padding: 4px 0; }
+.list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  gap: 10px;
+}
+.list-item:last-child { border-bottom: none; }
+.list-item-info { flex: 1; min-width: 0; }
+.list-item-title { font-weight: 600; font-size: 14px; color: var(--text); }
+.list-item-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+.pill {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.pill.present { background: var(--green-bg); color: var(--green); }
+.pill.absent { background: var(--gray-bg); color: var(--text2); }
+
+.student-photo {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--border-strong);
 }
 
-.checkin-btn:hover {
-  box-shadow: 0 0 0 2px var(--accent-glow);
+input, select {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  background: var(--surface);
+  color: var(--text);
 }
+input::placeholder { color: var(--text2); }
+
+/* ---------- BOTTOM NAV ---------- */
+.bottom-nav {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  background: var(--surface2);
+  border-top: 1px solid var(--border-strong);
+  display: flex;
+  padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
+}
+.nav-btn {
+  flex: 1;
+  background: none;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text2);
+  cursor: pointer;
+  padding: 4px 0;
+}
+.nav-btn i { font-size: 18px; }
+.nav-btn.active { color: var(--gold-light); }
+
+/* ---------- MAESTRO VISIBILITY ---------- */
+.maestro-only { display: none; }
+body.role-maestro .maestro-only { display: flex; }
+body.role-maestro .card.maestro-only,
+body.role-maestro .list-card.maestro-only { display: block; }
