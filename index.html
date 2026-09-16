@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DojoLog</title>
+
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+
+  <script defer src="firebase.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+
+<h1 class="page-title">DojoLog</h1>
+
+<div class="role-switcher">
+  <button class="role-btn active" onclick="setRole('allievo', this)">Allievo</button>
+  <button class="role-btn" onclick="setRole('maestro', this)">Maestro</button>
+</div>
+
+<div class="phone">
+
+  <div class="app-header">
+    <div class="name" id="user-name">Guest</div>
+  </div>
+
+  <div class="screen active" id="screen-home">
+
+    <!-- LOGIN -->
+    <div class="card">
+      <button class="checkin-btn" onclick="loginWithGoogle()">
+        <i class="fa-brands fa-google"></i>
+        Accedi con Google
+      </button>
+    </div>
+
+    <!-- CHECKIN -->
+    <div class="card">
+      <button class="checkin-btn" id="checkin-btn" onclick="doCheckin()">
+        Check-in ora
+      </button>
+    </div>
+
+    <!-- STATS -->
+    <div class="card">
+      <div>Presenze: <span id="att-count">0</span></div>
+    </div>
+
+  </div>
+
+</div>
+
+</body>
+</html>

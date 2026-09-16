@@ -1,0 +1,54 @@
+:root {
+  --bg: #0f0f10;
+  --surface: #18181b;
+  --surface2: #111113;
+
+  --border: rgba(255,255,255,0.08);
+  --border-strong: rgba(255,255,255,0.18);
+
+  --text: #f4f4f5;
+  --text2: #a1a1aa;
+
+  --accent: #d4af37;
+  --accent-strong: #f5d76e;
+  --accent-glow: rgba(212,175,55,0.25);
+}
+
+body {
+  font-family: sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.phone {
+  width: 360px;
+  background: var(--surface);
+  border-radius: 20px;
+  padding: 20px;
+}
+
+.card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  padding: 16px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+}
+
+.checkin-btn {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #d4af37, #f5d76e);
+  color: black;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.checkin-btn:hover {
+  box-shadow: 0 0 0 2px var(--accent-glow);
+}
