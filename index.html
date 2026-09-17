@@ -11,6 +11,7 @@
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
   <script defer src="firebase.js"></script>
   <script defer src="app.js"></script>
@@ -23,7 +24,6 @@
   <div class="app-header" id="app-header" style="display:none">
     <div class="header-top">
       <span class="clock">DojoLog</span>
-      <span class="role-toggle" onclick="toggleRole()" id="role-toggle-btn">Allievo</span>
     </div>
     <div class="greeting">Bentornato,</div>
     <div class="name" id="user-name">Guest</div>
@@ -111,6 +111,12 @@
 
       <div class="section-title">PANORAMICA DOJO</div>
       <div class="list-card" id="dashboard-summary"></div>
+
+      <div class="card">
+        <button class="checkin-btn secondary" onclick="logout()">
+          <i class="fa-solid fa-arrow-right-from-bracket"></i> Esci
+        </button>
+      </div>
     </div>
 
     <!-- ================= STUDENTS (maestro) ================= -->
@@ -140,6 +146,12 @@
       <div class="list-card" id="sessions-list"></div>
     </div>
 
+    <!-- ================= ADMIN (admin only) ================= -->
+    <div class="screen" id="screen-admin">
+      <div class="section-title">GESTIONE RUOLI</div>
+      <div class="list-card" id="admin-users-list"></div>
+    </div>
+
   </div>
 
   <!-- ============ BOTTOM NAV ============ -->
@@ -158,6 +170,9 @@
     </button>
     <button class="nav-btn" data-screen="profilo" onclick="showScreen('profilo', this)">
       <i class="fa-solid fa-user"></i><span>Profilo</span>
+    </button>
+    <button class="nav-btn admin-only" data-screen="admin" onclick="showScreen('admin', this)">
+      <i class="fa-solid fa-shield-halved"></i><span>Admin</span>
     </button>
   </div>
 
