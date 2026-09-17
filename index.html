@@ -7,7 +7,6 @@
 
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <link rel="icon" type="image/x-icon" href="assets/logo.jpeg">
 
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -20,12 +19,10 @@
 
 <div class="phone">
 
-  <!-- ============ HEADER ============ -->
-  <div class="app-header">
-    <img src="assets/logo.jpeg" alt="Exclusive BJJ Academy" class="dojo-logo">
-
+  <!-- ============ HEADER (visibile solo post-login) ============ -->
+  <div class="app-header" id="app-header" style="display:none">
     <div class="header-top">
-      <span class="clock">ExclusiveDojo</span>
+      <span class="clock">DojoLog</span>
       <span class="role-toggle" onclick="toggleRole()" id="role-toggle-btn">Allievo</span>
     </div>
     <div class="greeting">Bentornato,</div>
@@ -41,43 +38,57 @@
     <!-- ================= HOME ================= -->
     <div class="screen active" id="screen-home">
 
-      <div class="card login-card">
-        <button class="checkin-btn secondary" onclick="loginWithGoogle()">
-          <i class="fa-brands fa-google"></i> Accedi con Google
-        </button>
-      </div>
-
-      <div class="session-card">
-        <div class="session-label">SESSIONE DI OGGI</div>
-        <div class="session-name" id="today-session-name">Nessuna sessione oggi</div>
-        <div class="session-time" id="today-session-time"></div>
-        <button class="checkin-btn" id="checkin-btn" onclick="doCheckin()">
-          <i class="fa-solid fa-hand-point-up"></i> Check-in ora
-        </button>
-      </div>
-
-      <div class="stat-row">
-        <div class="stat-tile">
-          <div class="stat-label">Presenze totali</div>
-          <div class="stat-value" id="att-count">0</div>
-          <div class="stat-sub" id="att-since">—</div>
+      <!-- WELCOME / LOGIN (visibile solo se non loggato) -->
+      <div id="welcome-section">
+        <div class="welcome-logo-wrap">
+          <img src="assets/logo.jpeg" alt="Exclusive BJJ Academy" class="welcome-logo">
         </div>
-        <div class="stat-tile">
-          <div class="stat-label">Questo mese</div>
-          <div class="stat-value" id="month-count">0</div>
-          <div class="stat-sub" id="month-sub">di 0 sessioni</div>
-        </div>
+        <div class="welcome-title">Exclusive BJJ Academy</div>
+        <div class="welcome-subtitle">Benvenuto!<br>Procedi con l'accesso:</div>
+        <div class="welcome-divider"></div>
+        <button class="google-login-btn" onclick="loginWithGoogle()">
+          <i class="fa-brands fa-google"></i>
+          Accedi con Google
+        </button>
+        <div class="welcome-note">Accesso sicuro tramite il tuo account Google</div>
       </div>
 
-      <div class="section-title">ULTIME SESSIONI</div>
-      <div class="list-card" id="attendance-history"></div>
+      <!-- CONTENUTO POST-LOGIN (nascosto finché non loggato) -->
+      <div id="home-content" style="display:none">
 
-      <!-- MAESTRO: manual attendance add -->
-      <div class="card maestro-only">
-        <h3>Aggiungi presenza (Maestro)</h3>
-        <select id="manual-student-select"></select>
-        <select id="manual-session-select"></select>
-        <button class="checkin-btn" onclick="maestroAddAttendance()">Aggiungi presenza</button>
+        <div class="session-card">
+          <div class="session-label">SESSIONE DI OGGI</div>
+          <div class="session-name" id="today-session-name">Nessuna sessione oggi</div>
+          <div class="session-time" id="today-session-time"></div>
+          <button class="checkin-btn" id="checkin-btn" onclick="doCheckin()">
+            <i class="fa-solid fa-hand-point-up"></i> Check-in ora
+          </button>
+        </div>
+
+        <div class="stat-row">
+          <div class="stat-tile">
+            <div class="stat-label">Presenze totali</div>
+            <div class="stat-value" id="att-count">0</div>
+            <div class="stat-sub" id="att-since">—</div>
+          </div>
+          <div class="stat-tile">
+            <div class="stat-label">Questo mese</div>
+            <div class="stat-value" id="month-count">0</div>
+            <div class="stat-sub" id="month-sub">di 0 sessioni</div>
+          </div>
+        </div>
+
+        <div class="section-title">ULTIME SESSIONI</div>
+        <div class="list-card" id="attendance-history"></div>
+
+        <!-- MAESTRO: manual attendance add -->
+        <div class="card maestro-only">
+          <h3>Aggiungi presenza (Maestro)</h3>
+          <select id="manual-student-select"></select>
+          <select id="manual-session-select"></select>
+          <button class="checkin-btn" onclick="maestroAddAttendance()">Aggiungi presenza</button>
+        </div>
+
       </div>
 
     </div>
