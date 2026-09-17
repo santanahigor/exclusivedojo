@@ -1,29 +1,50 @@
 let currentRole = 'allievo';
+let currentUser = null;
 
-// ---------- STORAGE HELPERS ----------
-const STORAGE_KEYS = {
-  students: 'dojo-students',
-  sessions: 'dojo-sessions',
-  attendance: 'dojo-attendance'
-};
+let studentsCache = [];
+let sessionsCache = [];
+let attendanceCache = [];
+let usersCache = [];
 
-function load(key) {
-  const raw = localStorage.getItem(key);
-  return raw ? JSON.parse(raw) : [];
-}
-function save(key, data) {
-  localStorage.setItem(key, JSON.stringify(data));
-}
 function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
-// ---------- ROLE SWITCH ----------
-function toggleRole() {
-  currentRole = currentRole === 'allievo' ? 'maestro' : 'allievo';
-  document.getElementById('role-toggle-btn').textContent =
-    currentRole === 'allievo' ? 'Allievo' : 'Maestro';
-  document.body.classList.toggle('role-maestro', currentRole === 'maestro');
+// ---------- CALLED WHEN USER LOGS IN (role fetched from Firestore) ----------
+function onUserReady(user, role) {
+  currentUser = user;
+  currentRole = role;
+
+  document.body.classList.remove('role-maestro', 'role-admin');
+  if (role === 'maestro') document.body.classList.add('role-maestro');
+  if (role === 'admin') document.body.classList.add('role-maestro', 'role-admin');
+
+  attachFirestoreListeners();
+}
+
+// ---------- FIRESTORE LISTENERS ----------
+function attachFirestoreListeners() {
+  db.collection('students').onSnapshot(snap => {
+    studentsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderStudents(); populateManualSelects(); renderProfile();
+  });
+
+  db.collection('sessions').onSnapshot(snap => {
+    sessionsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderSessions(); populateManualSelects(); renderHome();
+  });
+
+  db.collection('attendance').onSnapshot(snap => {
+    attendanceCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderHome(); renderLeaderboard(); renderProfile();
+  });
+
+  if (currentRole === 'admin') {
+    db.collection('roles').onSnapshot(snap => {
+      usersCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderAdminPanel();
+    });
+  }
 }
 
 // ---------- SCREEN NAV ----------
@@ -38,47 +59,8 @@ function showScreen(name, el) {
   if (name === 'sessions') renderSessions();
   if (name === 'leaderboard') renderLeaderboard();
   if (name === 'profilo') renderProfile();
-  if (name === 'home') {
-    renderHome();
-    populateManualSelects();
-  }
-}
-
-// ---------- LOGIN STATE ----------
-function onUserLoggedIn(user) {
-  // Nascondi welcome, mostra header e contenuto
-  document.getElementById('welcome-section').style.display = 'none';
-  document.getElementById('home-content').style.display = 'block';
-  document.getElementById('app-header').style.display = 'block';
-
-  // Mostra bottom nav e aggiorna nome
-  document.body.classList.add('logged-in');
-  if (user) {
-    document.getElementById('user-name').textContent = user.displayName || user.email || 'Utente';
-  }
-
-  renderHome();
-  populateManualSelects();
-}
-
-function onUserLoggedOut() {
-  document.getElementById('welcome-section').style.display = 'flex';
-  document.getElementById('home-content').style.display = 'none';
-  document.getElementById('app-header').style.display = 'none';
-  document.body.classList.remove('logged-in');
-}
-
-// Chiamata dal firebase.js dopo login Google — stub locale per dev senza Firebase
-function loginWithGoogle() {
-  // In produzione: firebase.auth().signInWithPopup(provider)
-  // Per sviluppo locale, simuliamo il login
-  if (typeof firebase !== 'undefined' && firebase.auth) {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    firebase.auth().signInWithPopup(provider).catch(err => alert('Errore login: ' + err.message));
-  } else {
-    // Modalità sviluppo senza Firebase: simula utente
-    onUserLoggedIn({ displayName: 'Marco Rossi', email: 'marco@dojo.it' });
-  }
+  if (name === 'admin') renderAdminPanel();
+  if (name === 'home') renderHome();
 }
 
 // ---------- NOTIFICATIONS ----------
@@ -93,6 +75,35 @@ function notify(title, body) {
   }
 }
 
+// ---------- ADMIN: MANAGE ROLES ----------
+function renderAdminPanel() {
+  const container = document.getElementById('admin-users-list');
+  if (!container) return;
+
+  if (usersCache.length === 0) {
+    container.innerHTML = '<div class="list-item"><div class="list-item-info">Nessun utente registrato ancora.</div></div>';
+    return;
+  }
+
+  container.innerHTML = usersCache.map(u => `
+    <div class="list-item">
+      <div class="list-item-info">
+        <div class="list-item-title">${u.name || u.email}</div>
+        <div class="list-item-sub">${u.email}</div>
+      </div>
+      <select onchange="changeUserRole('${u.id}', this.value)" style="width:auto;">
+        <option value="allievo" ${u.role === 'allievo' ? 'selected' : ''}>Allievo</option>
+        <option value="maestro" ${u.role === 'maestro' ? 'selected' : ''}>Maestro</option>
+        <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option>
+      </select>
+    </div>
+  `).join('');
+}
+
+function changeUserRole(userId, newRole) {
+  db.collection('roles').doc(userId).update({ role: newRole });
+}
+
 // ---------- STUDENTS ----------
 function addStudent() {
   const name = document.getElementById('new-student-name').value.trim();
@@ -102,49 +113,32 @@ function addStudent() {
 
   if (!name) return alert('Inserisci un nome.');
 
-  const students = load(STORAGE_KEYS.students);
-  students.push({ id: uid(), name, photo, belt, dob });
-  save(STORAGE_KEYS.students, students);
-
-  document.getElementById('new-student-name').value = '';
-  document.getElementById('new-student-photo').value = '';
-  document.getElementById('new-student-belt').value = '';
-  document.getElementById('new-student-dob').value = '';
-
-  notify('Sei stato aggiunto', `${name} è stato aggiunto al Dojo.`);
-
-  renderStudents();
-  populateManualSelects();
+  db.collection('students').add({
+    name, photo, belt, dob,
+    createdBy: currentUser?.uid || 'unknown',
+    createdAt: Date.now()
+  }).then(() => {
+    document.getElementById('new-student-name').value = '';
+    document.getElementById('new-student-photo').value = '';
+    document.getElementById('new-student-belt').value = '';
+    document.getElementById('new-student-dob').value = '';
+    notify('Sei stato aggiunto', `${name} è stato aggiunto al Dojo.`);
+  });
 }
 
-function deleteStudent(id) {
-  let students = load(STORAGE_KEYS.students);
-  students = students.filter(s => s.id !== id);
-  save(STORAGE_KEYS.students, students);
-  renderStudents();
-  populateManualSelects();
-}
-
-function updateStudentBelt(id, newBelt) {
-  const students = load(STORAGE_KEYS.students);
-  const s = students.find(s => s.id === id);
-  if (s) {
-    s.belt = newBelt;
-    save(STORAGE_KEYS.students, students);
-  }
-}
+function deleteStudent(id) { db.collection('students').doc(id).delete(); }
+function updateStudentBelt(id, newBelt) { db.collection('students').doc(id).update({ belt: newBelt }); }
 
 function renderStudents() {
-  const students = load(STORAGE_KEYS.students);
   const container = document.getElementById('students-list');
   if (!container) return;
 
-  if (students.length === 0) {
+  if (studentsCache.length === 0) {
     container.innerHTML = '<div class="list-item"><div class="list-item-info">Nessun allievo registrato.</div></div>';
     return;
   }
 
-  container.innerHTML = students.map(s => `
+  container.innerHTML = studentsCache.map(s => `
     <div class="list-item">
       ${s.photo ? `<img src="${s.photo}" class="student-photo" alt="${s.name}">` : ''}
       <div class="list-item-info">
@@ -171,41 +165,29 @@ function addSession() {
 
   if (!name || !date) return alert('Inserisci nome e data della sessione.');
 
-  const sessions = load(STORAGE_KEYS.sessions);
-  sessions.push({ id: uid(), name, date, time });
-  save(STORAGE_KEYS.sessions, sessions);
+  db.collection('sessions').add({
+    name, date, time,
+    createdBy: currentUser?.uid || 'unknown',
+    createdAt: Date.now()
+  }).then(() => {
+    document.getElementById('new-session-name').value = '';
+    document.getElementById('new-session-date').value = '';
+    document.getElementById('new-session-time').value = '';
 
-  document.getElementById('new-session-name').value = '';
-  document.getElementById('new-session-date').value = '';
-  document.getElementById('new-session-time').value = '';
-
-  const today = new Date().toISOString().slice(0, 10);
-  if (date === today) {
-    notify('Sessione iniziata', `${name} è iniziata oggi.`);
-  }
-
-  renderSessions();
-  populateManualSelects();
-  renderHome();
+    const today = new Date().toISOString().slice(0, 10);
+    if (date === today) notify('Sessione iniziata', `${name} è iniziata oggi.`);
+  });
 }
 
 function deleteSession(id) {
-  let sessions = load(STORAGE_KEYS.sessions);
-  sessions = sessions.filter(s => s.id !== id);
-  save(STORAGE_KEYS.sessions, sessions);
-
-  let attendance = load(STORAGE_KEYS.attendance);
-  attendance = attendance.filter(a => a.sessionId !== id);
-  save(STORAGE_KEYS.attendance, attendance);
-
-  renderSessions();
-  populateManualSelects();
+  db.collection('sessions').doc(id).delete();
+  db.collection('attendance').where('sessionId', '==', id).get().then(snap => {
+    snap.forEach(doc => doc.ref.delete());
+  });
 }
 
 function renderSessions() {
-  const sessions = load(STORAGE_KEYS.sessions).sort((a, b) => a.date.localeCompare(b.date));
-  const students = load(STORAGE_KEYS.students);
-  const attendance = load(STORAGE_KEYS.attendance);
+  const sessions = [...sessionsCache].sort((a, b) => a.date.localeCompare(b.date));
   const container = document.getElementById('sessions-list');
   if (!container) return;
 
@@ -215,9 +197,9 @@ function renderSessions() {
   }
 
   container.innerHTML = sessions.map(s => {
-    const attendees = attendance
+    const attendees = attendanceCache
       .filter(a => a.sessionId === s.id)
-      .map(a => students.find(st => st.id === a.studentId)?.name || 'Sconosciuto');
+      .map(a => studentsCache.find(st => st.id === a.studentId)?.name || 'Sconosciuto');
 
     return `
       <div class="list-item">
@@ -236,51 +218,28 @@ function renderSessions() {
 
 // ---------- ATTENDANCE ----------
 function populateManualSelects() {
-  const students = load(STORAGE_KEYS.students);
-  const sessions = load(STORAGE_KEYS.sessions);
-
   const studentSelect = document.getElementById('manual-student-select');
   const sessionSelect = document.getElementById('manual-session-select');
   if (!studentSelect || !sessionSelect) return;
 
-  studentSelect.innerHTML = students
-    .map(s => `<option value="${s.id}">${s.name}</option>`)
-    .join('');
-
-  sessionSelect.innerHTML = sessions
-    .map(s => `<option value="${s.id}">${s.name} (${s.date})</option>`)
-    .join('');
+  studentSelect.innerHTML = studentsCache.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+  sessionSelect.innerHTML = sessionsCache.map(s => `<option value="${s.id}">${s.name} (${s.date})</option>`).join('');
 }
 
 function maestroAddAttendance() {
   const studentId = document.getElementById('manual-student-select').value;
   const sessionId = document.getElementById('manual-session-select').value;
-
   if (!studentId || !sessionId) return alert('Seleziona allievo e sessione.');
 
-  const attendance = load(STORAGE_KEYS.attendance);
-  attendance.push({
-    id: uid(),
-    studentId,
-    sessionId,
+  db.collection('attendance').add({
+    studentId, sessionId,
     date: new Date().toISOString().slice(0, 10),
-    timestamp: Date.now()
+    timestamp: Date.now(),
+    addedBy: currentUser?.uid || 'unknown'
   });
-  save(STORAGE_KEYS.attendance, attendance);
-
-  renderHome();
-  renderSessions();
-  renderLeaderboard();
 }
 
-function deleteAttendance(id) {
-  let attendance = load(STORAGE_KEYS.attendance);
-  attendance = attendance.filter(a => a.id !== id);
-  save(STORAGE_KEYS.attendance, attendance);
-  renderHome();
-  renderSessions();
-  renderLeaderboard();
-}
+function deleteAttendance(id) { db.collection('attendance').doc(id).delete(); }
 
 function formatDate(dateStr) {
   if (!dateStr) return '';
@@ -291,8 +250,7 @@ function formatDate(dateStr) {
 }
 
 function renderAttendanceHistory() {
-  const attendance = load(STORAGE_KEYS.attendance).sort((a, b) => b.timestamp - a.timestamp);
-  const sessions = load(STORAGE_KEYS.sessions);
+  const attendance = [...attendanceCache].sort((a, b) => b.timestamp - a.timestamp);
   const container = document.getElementById('attendance-history');
   if (!container) return;
 
@@ -302,7 +260,7 @@ function renderAttendanceHistory() {
   }
 
   container.innerHTML = attendance.slice(0, 8).map(a => {
-    const session = sessions.find(s => s.id === a.sessionId);
+    const session = sessionsCache.find(s => s.id === a.sessionId);
     return `
       <div class="list-item">
         <div class="list-item-info">
@@ -318,72 +276,71 @@ function renderAttendanceHistory() {
   }).join('');
 }
 
-// ---------- CHECK-IN (self, allievo) ----------
+// ---------- CHECK-IN ----------
 function doCheckin() {
-  const attendance = load(STORAGE_KEYS.attendance);
-  attendance.push({
-    id: uid(),
-    studentId: 'self',
+  if (!currentUser) return alert('Accedi con Google prima di fare check-in.');
+
+  db.collection('attendance').add({
+    studentId: currentUser.uid,
     sessionId: getTodaySession()?.id || 'generic',
     date: new Date().toISOString().slice(0, 10),
     timestamp: Date.now()
+  }).then(() => {
+    const btn = document.getElementById('checkin-btn');
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> Check-in effettuato';
   });
-  save(STORAGE_KEYS.attendance, attendance);
-
-  const btn = document.getElementById('checkin-btn');
-  btn.innerHTML = '<i class="fa-solid fa-check"></i> Check-in effettuato';
-
-  renderHome();
-  renderLeaderboard();
 }
 
-// ---------- HOME (today's session + stats + history) ----------
+// ---------- HOME ----------
 function getTodaySession() {
-  const sessions = load(STORAGE_KEYS.sessions);
   const today = new Date().toISOString().slice(0, 10);
-  return sessions.find(s => s.date === today);
+  return sessionsCache.find(s => s.date === today);
 }
 
 function renderHome() {
-  const attendance = load(STORAGE_KEYS.attendance);
   const today = new Date();
   const todaySession = getTodaySession();
 
-  document.getElementById('today-session-name').textContent =
-    todaySession ? todaySession.name : 'Nessuna sessione oggi';
-  document.getElementById('today-session-time').textContent =
-    todaySession ? `${formatDate(todaySession.date)} · ${todaySession.time || ''}` : '';
+  const nameEl = document.getElementById('today-session-name');
+  const timeEl = document.getElementById('today-session-time');
+  if (nameEl) nameEl.textContent = todaySession ? todaySession.name : 'Nessuna sessione oggi';
+  if (timeEl) timeEl.textContent = todaySession ? `${formatDate(todaySession.date)} · ${todaySession.time || ''}` : '';
 
-  document.getElementById('att-count').textContent = attendance.length;
-  localStorage.setItem('att-count', attendance.length);
+  const attCountEl = document.getElementById('att-count');
+  if (attCountEl) attCountEl.textContent = attendanceCache.length;
 
-  const monthAttendance = attendance.filter(a => {
+  const monthAttendance = attendanceCache.filter(a => {
     const d = new Date(a.date);
     return d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
   });
-  const monthSessions = load(STORAGE_KEYS.sessions).filter(s => {
+  const monthSessions = sessionsCache.filter(s => {
     const d = new Date(s.date);
     return d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
   });
-  document.getElementById('month-count').textContent = monthAttendance.length;
-  document.getElementById('month-sub').textContent = `di ${monthSessions.length} sessioni`;
-  document.getElementById('att-since').textContent =
-    attendance.length ? `dal ${formatDate(attendance[0].date)}` : '—';
+
+  const monthCountEl = document.getElementById('month-count');
+  const monthSubEl = document.getElementById('month-sub');
+  if (monthCountEl) monthCountEl.textContent = monthAttendance.length;
+  if (monthSubEl) monthSubEl.textContent = `di ${monthSessions.length} sessioni`;
+
+  const attSinceEl = document.getElementById('att-since');
+  if (attSinceEl) {
+    const sorted = [...attendanceCache].sort((a, b) => a.timestamp - b.timestamp);
+    attSinceEl.textContent = sorted.length ? `dal ${formatDate(sorted[0].date)}` : '—';
+  }
 
   renderAttendanceHistory();
 }
 
 // ---------- LEADERBOARD ----------
 function renderLeaderboard() {
-  const students = load(STORAGE_KEYS.students);
-  const attendance = load(STORAGE_KEYS.attendance);
   const container = document.getElementById('leaderboard-list');
   if (!container) return;
 
-  const counts = students.map(s => ({
+  const counts = studentsCache.map(s => ({
     name: s.name,
     photo: s.photo,
-    count: attendance.filter(a => a.studentId === s.id).length
+    count: attendanceCache.filter(a => a.studentId === s.id).length
   })).sort((a, b) => b.count - a.count);
 
   if (counts.length === 0) {
@@ -393,7 +350,7 @@ function renderLeaderboard() {
 
   container.innerHTML = counts.map((c, i) => `
     <div class="list-item">
-      ${c.photo ? `<img src="${c.photo}" class="student-photo">` : `<div class="student-photo" style="background:#eee;display:flex;align-items:center;justify-content:center;font-weight:700;">${i+1}</div>`}
+      ${c.photo ? `<img src="${c.photo}" class="student-photo">` : `<div class="student-photo" style="background:#333;display:flex;align-items:center;justify-content:center;font-weight:700;">${i+1}</div>`}
       <div class="list-item-info">
         <div class="list-item-title">#${i + 1} ${c.name}</div>
         <div class="list-item-sub">${c.count} presenze</div>
@@ -402,26 +359,24 @@ function renderLeaderboard() {
   `).join('');
 }
 
-// ---------- PROFILE / DASHBOARD ----------
+// ---------- PROFILE ----------
 function renderProfile() {
-  const students = load(STORAGE_KEYS.students);
-  const sessions = load(STORAGE_KEYS.sessions);
-  const attendance = load(STORAGE_KEYS.attendance);
-  const today = new Date().toISOString().slice(0, 10);
-
   const detailsEl = document.getElementById('profile-details');
   const dobEl = document.getElementById('dashboard-dob');
   const summaryEl = document.getElementById('dashboard-summary');
   if (!detailsEl) return;
 
   const name = document.getElementById('user-name').textContent;
+  const myAttendance = attendanceCache.filter(a => a.studentId === currentUser?.uid);
+
   detailsEl.innerHTML = `
     <div class="list-item-title">${name}</div>
-    <div class="list-item-sub">Presenze totali: ${attendance.length}</div>
+    <div class="list-item-sub">Ruolo: ${currentRole}</div>
+    <div class="list-item-sub">Presenze totali: ${myAttendance.length}</div>
   `;
 
-  dobEl.innerHTML = students.length
-    ? students.map(s => `
+  dobEl.innerHTML = studentsCache.length
+    ? studentsCache.map(s => `
         <div class="list-item">
           <div class="list-item-info">
             <div class="list-item-title">${s.name}</div>
@@ -431,50 +386,19 @@ function renderProfile() {
       `).join('')
     : '<div class="list-item"><div class="list-item-info">Nessun allievo registrato.</div></div>';
 
-  const todaySessions = sessions.filter(s => s.date === today);
-  const todayAttendance = attendance.filter(a => a.date === today);
+  const today = new Date().toISOString().slice(0, 10);
+  const todaySessions = sessionsCache.filter(s => s.date === today);
+  const todayAttendance = attendanceCache.filter(a => a.date === today);
 
   summaryEl.innerHTML = `
-    <div class="list-item"><div class="list-item-info">Allievi totali</div><strong>${students.length}</strong></div>
-    <div class="list-item"><div class="list-item-info">Sessioni totali</div><strong>${sessions.length}</strong></div>
+    <div class="list-item"><div class="list-item-info">Allievi totali</div><strong>${studentsCache.length}</strong></div>
+    <div class="list-item"><div class="list-item-info">Sessioni totali</div><strong>${sessionsCache.length}</strong></div>
     <div class="list-item"><div class="list-item-info">Sessioni oggi</div><strong>${todaySessions.length}</strong></div>
     <div class="list-item"><div class="list-item-info">Presenze oggi</div><strong>${todayAttendance.length}</strong></div>
   `;
 }
 
-// ---------- BELT BADGE (header) ----------
-function updateBeltBadge() {
-  const students = load(STORAGE_KEYS.students);
-  const beltText = document.getElementById('belt-text');
-  if (students.length > 0 && students[0].belt) {
-    beltText.textContent = students[0].belt;
-  }
-}
-
 // ---------- INIT ----------
 window.onload = () => {
   requestNotificationPermission();
-
-  // Stato iniziale: welcome visibile, header e home-content nascosti
-  document.getElementById('welcome-section').style.display = 'flex';
-  document.getElementById('home-content').style.display = 'none';
-  document.getElementById('app-header').style.display = 'none';
-
-  // Se Firebase è disponibile, ascolta lo stato auth
-  if (typeof firebase !== 'undefined' && firebase.auth) {
-    firebase.auth().onAuthStateChanged(user => {
-      if (user) {
-        onUserLoggedIn(user);
-      } else {
-        onUserLoggedOut();
-      }
-    });
-  }
-
-  // Render che non dipendono dal login
-  renderStudents();
-  renderSessions();
-  renderLeaderboard();
-  renderProfile();
-  updateBeltBadge();
 };
