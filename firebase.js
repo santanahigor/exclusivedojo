@@ -20,9 +20,18 @@ function logout() {
 }
 
 // Handle the redirect result (fires once, after returning from Google login)
-auth.getRedirectResult().catch((error) => {
-  console.error('Redirect login error:', error);
-});
+auth.getRedirectResult()
+  .then((result) => {
+    console.log('getRedirectResult:', result);
+    if (result.user) {
+      console.log('✅ Redirect login success:', result.user.email);
+    } else {
+      console.log('ℹ️ No redirect result (normal on first load without redirect).');
+    }
+  })
+  .catch((error) => {
+    console.error('❌ Redirect login error:', error.code, error.message);
+  });
 
 auth.onAuthStateChanged(async (user) => {
   if (!user) {
