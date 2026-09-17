@@ -1,3 +1,4 @@
+// 🔴 REPLACE THIS CONFIG WITH YOURS
 const firebaseConfig = {
   apiKey: "AIzaSyA7H0pY3kBXSth9JEQPZ4BpWmUjuj1eHrM",
   authDomain: "exclusivedojo.firebaseapp.com",

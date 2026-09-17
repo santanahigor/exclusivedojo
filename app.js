@@ -44,6 +44,43 @@ function showScreen(name, el) {
   }
 }
 
+// ---------- LOGIN STATE ----------
+function onUserLoggedIn(user) {
+  // Nascondi welcome, mostra header e contenuto
+  document.getElementById('welcome-section').style.display = 'none';
+  document.getElementById('home-content').style.display = 'block';
+  document.getElementById('app-header').style.display = 'block';
+
+  // Mostra bottom nav e aggiorna nome
+  document.body.classList.add('logged-in');
+  if (user) {
+    document.getElementById('user-name').textContent = user.displayName || user.email || 'Utente';
+  }
+
+  renderHome();
+  populateManualSelects();
+}
+
+function onUserLoggedOut() {
+  document.getElementById('welcome-section').style.display = 'flex';
+  document.getElementById('home-content').style.display = 'none';
+  document.getElementById('app-header').style.display = 'none';
+  document.body.classList.remove('logged-in');
+}
+
+// Chiamata dal firebase.js dopo login Google — stub locale per dev senza Firebase
+function loginWithGoogle() {
+  // In produzione: firebase.auth().signInWithPopup(provider)
+  // Per sviluppo locale, simuliamo il login
+  if (typeof firebase !== 'undefined' && firebase.auth) {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    firebase.auth().signInWithPopup(provider).catch(err => alert('Errore login: ' + err.message));
+  } else {
+    // Modalità sviluppo senza Firebase: simula utente
+    onUserLoggedIn({ displayName: 'Marco Rossi', email: 'marco@dojo.it' });
+  }
+}
+
 // ---------- NOTIFICATIONS ----------
 function requestNotificationPermission() {
   if ('Notification' in window && Notification.permission === 'default') {
@@ -418,8 +455,23 @@ function updateBeltBadge() {
 window.onload = () => {
   requestNotificationPermission();
 
-  renderHome();
-  populateManualSelects();
+  // Stato iniziale: welcome visibile, header e home-content nascosti
+  document.getElementById('welcome-section').style.display = 'flex';
+  document.getElementById('home-content').style.display = 'none';
+  document.getElementById('app-header').style.display = 'none';
+
+  // Se Firebase è disponibile, ascolta lo stato auth
+  if (typeof firebase !== 'undefined' && firebase.auth) {
+    firebase.auth().onAuthStateChanged(user => {
+      if (user) {
+        onUserLoggedIn(user);
+      } else {
+        onUserLoggedOut();
+      }
+    });
+  }
+
+  // Render che non dipendono dal login
   renderStudents();
   renderSessions();
   renderLeaderboard();
