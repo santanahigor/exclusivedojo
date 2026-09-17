@@ -6,44 +6,77 @@ let sessionsCache = [];
 let attendanceCache = [];
 let usersCache = [];
 
+let unsubscribers = [];
+
 function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
-// ---------- CALLED WHEN USER LOGS IN (role fetched from Firestore) ----------
+// ---------- CALLED WHEN USER LOGS IN ----------
 function onUserReady(user, role) {
   currentUser = user;
   currentRole = role;
 
-  document.body.classList.remove('role-maestro', 'role-admin');
+  document.body.classList.remove('role-maestro', 'role-admin', 'logged-out');
   if (role === 'maestro') document.body.classList.add('role-maestro');
   if (role === 'admin') document.body.classList.add('role-maestro', 'role-admin');
 
   attachFirestoreListeners();
+  showScreen('home', document.querySelector('.nav-btn[data-screen="home"]'));
+}
+
+// ---------- CALLED WHEN USER LOGS OUT ----------
+function onUserLoggedOut() {
+  // detach all Firestore listeners
+  unsubscribers.forEach(unsub => unsub());
+  unsubscribers = [];
+
+  currentUser = null;
+  currentRole = 'allievo';
+  studentsCache = [];
+  sessionsCache = [];
+  attendanceCache = [];
+  usersCache = [];
+
+  document.body.classList.remove('role-maestro', 'role-admin');
+  document.body.classList.add('logged-out');
+
+  document.getElementById('user-name').textContent = 'Guest';
+
+  const checkinBtn = document.getElementById('checkin-btn');
+  if (checkinBtn) checkinBtn.innerHTML = '<i class="fa-solid fa-hand-point-up"></i> Check-in ora';
 }
 
 // ---------- FIRESTORE LISTENERS ----------
 function attachFirestoreListeners() {
-  db.collection('students').onSnapshot(snap => {
-    studentsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    renderStudents(); populateManualSelects(); renderProfile();
-  });
+  unsubscribers.push(
+    db.collection('students').onSnapshot(snap => {
+      studentsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderStudents(); populateManualSelects(); renderProfile();
+    })
+  );
 
-  db.collection('sessions').onSnapshot(snap => {
-    sessionsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    renderSessions(); populateManualSelects(); renderHome();
-  });
+  unsubscribers.push(
+    db.collection('sessions').onSnapshot(snap => {
+      sessionsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderSessions(); populateManualSelects(); renderHome();
+    })
+  );
 
-  db.collection('attendance').onSnapshot(snap => {
-    attendanceCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    renderHome(); renderLeaderboard(); renderProfile();
-  });
+  unsubscribers.push(
+    db.collection('attendance').onSnapshot(snap => {
+      attendanceCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderHome(); renderLeaderboard(); renderProfile();
+    })
+  );
 
   if (currentRole === 'admin') {
-    db.collection('roles').onSnapshot(snap => {
-      usersCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      renderAdminPanel();
-    });
+    unsubscribers.push(
+      db.collection('roles').onSnapshot(snap => {
+        usersCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderAdminPanel();
+      })
+    );
   }
 }
 
@@ -53,7 +86,7 @@ function showScreen(name, el) {
   document.getElementById('screen-' + name).classList.add('active');
 
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
+  if (el) el.classList.add('active');
 
   if (name === 'students') renderStudents();
   if (name === 'sessions') renderSessions();
@@ -401,4 +434,5 @@ function renderProfile() {
 // ---------- INIT ----------
 window.onload = () => {
   requestNotificationPermission();
+  document.body.classList.add('logged-out');
 };

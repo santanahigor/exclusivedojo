@@ -12,11 +12,23 @@ const db = firebase.firestore();
 
 function loginWithGoogle() {
   const provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithPopup(provider).catch(console.error);
+  auth.signInWithRedirect(provider).catch(console.error);
 }
 
+function logout() {
+  auth.signOut().catch(console.error);
+}
+
+// Handle the redirect result (fires once, after returning from Google login)
+auth.getRedirectResult().catch((error) => {
+  console.error('Redirect login error:', error);
+});
+
 auth.onAuthStateChanged(async (user) => {
-  if (!user) return;
+  if (!user) {
+    if (typeof onUserLoggedOut === 'function') onUserLoggedOut();
+    return;
+  }
 
   document.getElementById("user-name").textContent = user.displayName;
 
@@ -24,7 +36,6 @@ auth.onAuthStateChanged(async (user) => {
   const roleSnap = await roleRef.get();
 
   if (!roleSnap.exists) {
-    // First login → auto-register as 'allievo'
     await roleRef.set({
       role: 'allievo',
       email: user.email,
@@ -37,9 +48,3 @@ auth.onAuthStateChanged(async (user) => {
 
   if (typeof onUserReady === 'function') onUserReady(user, role);
 });
-
-function logout() {
-  auth.signOut().then(() => {
-    window.location.reload();
-  }).catch(console.error);
-}

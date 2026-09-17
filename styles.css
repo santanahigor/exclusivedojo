@@ -376,3 +376,21 @@ body.role-maestro .list-card.maestro-only { display: block; }
 /* ---------- ADMIN VISIBILITY ---------- */
 .admin-only { display: none; }
 body.role-admin .admin-only { display: flex; }
+
+/* ---------- LOGGED OUT STATE ---------- */
+body.logged-out .bottom-nav,
+body.logged-out .session-card,
+body.logged-out .stat-row,
+body.logged-out .section-title,
+body.logged-out #attendance-history,
+body.logged-out .card.maestro-only {
+  display: none !important;
+}
+
+body.logged-out .login-card {
+  margin-top: 40px;
+}
+
+.login-card {
+  text-align: center;
+}
